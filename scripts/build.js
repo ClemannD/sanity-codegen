@@ -48,7 +48,7 @@ async function build() {
         main: 'index.js',
         module: 'index.esm.js',
         bin: {
-          'sanity-codegen': './cli.js',
+          'sanity-codegen-2': './cli.js',
         },
       },
       null,

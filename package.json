@@ -1,7 +1,7 @@
 {
-  "name": "sanity-codegen",
-  "version": "0.9.8",
-  "private": true,
+  "name": "sanity-codegen-2",
+  "version": "1.0.2",
+  "private": false,
   "description": "",
   "repository": {
     "type": "git",
