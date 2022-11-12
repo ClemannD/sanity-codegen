@@ -1,43 +1,43 @@
-import { ResolveConfigOptions, format, resolveConfig } from 'prettier';
+import { ResolveConfigOptions, format, resolveConfig } from "prettier";
 
-type ArrayType = { type: 'array'; of: Array<{ type: string }> };
-type BlockType = { type: 'block' };
-type BooleanType = { type: 'boolean' };
-type DateType = { type: 'date' };
-type DatetimeType = { type: 'datetime' };
+type ArrayType = { type: "array"; of: Array<{ type: string }> };
+type BlockType = { type: "block" };
+type BooleanType = { type: "boolean" };
+type DateType = { type: "date" };
+type DatetimeType = { type: "datetime" };
 type DocumentType = {
-  type: 'document';
+  type: "document";
   fields: Field[];
   name: string;
   title?: string;
   description?: string;
 };
-type FileType = { type: 'file'; name?: string; fields?: any[] };
-type GeopointType = { type: 'geopoint' };
-type ImageType = { type: 'image'; name?: string; fields?: any[] };
-type NumberType = { type: 'number' };
+type FileType = { type: "file"; name?: string; fields?: any[] };
+type GeopointType = { type: "geopoint" };
+type ImageType = { type: "image"; name?: string; fields?: any[] };
+type NumberType = { type: "number" };
 type ObjectType = {
-  type: 'object';
+  type: "object";
   fields: Field[];
   name?: string;
   title?: string;
   description?: string;
 };
 type ReferenceType = {
-  type: 'reference';
+  type: "reference";
   // even though the sanity docs say this is only ever an array, their default
   // blog example doesn't follow this.
   to: { type: string } | Array<{ type: string }>;
   weak?: boolean;
 };
-type SlugType = { name?: string; type: 'slug' };
+type SlugType = { name?: string; type: "slug" };
 type StringType = {
-  type: 'string';
+  type: "string";
   options?: { list?: Array<string | { title: string; value: string }> };
 };
-type SpanType = { type: 'span' };
-type TextType = { type: 'text'; rows?: number };
-type UrlType = { type: 'url' };
+type SpanType = { type: "span" };
+type TextType = { type: "text"; rows?: number };
+type UrlType = { type: "url" };
 
 type IntrinsicType =
   | ArrayType
@@ -79,18 +79,18 @@ function validatePropertyName(
   params: { allowHyphen: boolean; allowPeriod: boolean }
 ) {
   const regex = new RegExp(
-    `^[A-Z][A-Z0-9_${params.allowPeriod ? '\\.' : ''}${
-      params.allowHyphen ? '-' : ''
+    `^[A-Z][A-Z0-9_${params.allowPeriod ? "\\." : ""}${
+      params.allowHyphen ? "-" : ""
     }]*$`,
-    'i'
+    "i"
   );
 
   if (!regex.test(sanityTypeName)) {
     throw new Error(
       `Name "${sanityTypeName}" ${
         parents.length > 0
-          ? `in type "${parents.map((i) => i.path).join('.')}" `
-          : ''
+          ? `in type "${parents.map((i) => i.path).join(".")}" `
+          : ""
       }is not valid. Ensure camel case, alphanumeric, and underscore characters only`
     );
   }
@@ -142,10 +142,10 @@ async function generateTypes({
   prettierResolveConfigOptions,
 }: GenerateTypesOptions) {
   const documentTypes = types.filter(
-    (t): t is DocumentType => t.type === 'document'
+    (t): t is DocumentType => t.type === "document"
   );
   const otherTypes = types.filter(
-    (t): t is Exclude<IntrinsicType, DocumentType> => t.type !== 'document'
+    (t): t is Exclude<IntrinsicType, DocumentType> => t.type !== "document"
   );
 
   const createdTypeNames: { [name: string]: boolean } = {};
@@ -183,7 +183,7 @@ async function generateTypes({
   function convertType(obj: Node, parents: Parent[]): string {
     const intrinsic = obj as IntrinsicType;
 
-    if (intrinsic.type === 'array') {
+    if (intrinsic.type === "array") {
       const union = intrinsic.of
         .map((i, index) =>
           convertType(i, [
@@ -202,52 +202,52 @@ async function generateTypes({
 
           if (referenceMatch) {
             const innerType = referenceMatch[1];
-            return `SanityKeyedReference<${innerType}>`;
+            return innerType;
           }
 
           return `SanityKeyed<${i}>`;
         })
-        .join(' | ');
+        .join(" | ");
       return `Array<${union}>`;
     }
-    if (intrinsic.type === 'block') {
-      return 'SanityBlock';
+    if (intrinsic.type === "block") {
+      return "SanityBlock";
     }
-    if (intrinsic.type === 'document') {
-      throw new Error('Found nested document type');
+    if (intrinsic.type === "document") {
+      throw new Error("Found nested document type");
     }
-    if (intrinsic.type === 'span') {
-      throw new Error('Found span outside of a block type.');
+    if (intrinsic.type === "span") {
+      throw new Error("Found span outside of a block type.");
     }
-    if (intrinsic.type === 'geopoint') {
-      return 'SanityGeoPoint';
+    if (intrinsic.type === "geopoint") {
+      return "SanityGeoPoint";
     }
-    if (intrinsic.type === 'image' || intrinsic.type === 'file') {
+    if (intrinsic.type === "image" || intrinsic.type === "file") {
       const lastParent = parents[parents.length - 1] as Parent | undefined;
 
       // if the last parent has fields, then the resulting type won't use it's
       // name as the `_type`
       const lastParentHasFields =
         lastParent?.node.type &&
-        ['object', 'image', 'file'].includes(lastParent.node.type);
+        ["object", "image", "file"].includes(lastParent.node.type);
       const typeName = lastParentHasFields
         ? intrinsic.type
         : intrinsic.name || intrinsic.type;
 
       const typeClause = `_type: '${typeName}'; `;
       const assetClause = `asset: SanityReference<${
-        intrinsic.type === 'image'
-          ? 'SanityImageAsset'
+        intrinsic.type === "image"
+          ? "SanityImageAsset"
           : // TODO: add types for non-image assets
-            'any'
+            "any"
       }>;`;
       const imageSpecificClause =
-        intrinsic.type === 'image'
+        intrinsic.type === "image"
           ? `
         crop?: SanityImageCrop;
         hotspot?: SanityImageHotspot;
       `
-          : '';
+          : "";
 
       const fields = intrinsic?.fields || [];
 
@@ -262,10 +262,10 @@ async function generateTypes({
           ])
         )
         .filter(Boolean)
-        .join('\n')} }`;
+        .join("\n")} }`;
     }
-    if (intrinsic.type === 'object') {
-      const typeClause = intrinsic.name ? `_type: '${intrinsic.name}';` : '';
+    if (intrinsic.type === "object") {
+      const typeClause = intrinsic.name ? `_type: '${intrinsic.name}';` : "";
 
       return `{ ${typeClause} ${intrinsic.fields
         .map((field) =>
@@ -273,14 +273,14 @@ async function generateTypes({
             ...parents,
             {
               node: intrinsic,
-              path: intrinsic.name || '(anonymous object)',
+              path: intrinsic.name || "(anonymous object)",
             },
           ])
         )
         .filter(Boolean)
-        .join('\n')} }`;
+        .join("\n")} }`;
     }
-    if (intrinsic.type === 'reference') {
+    if (intrinsic.type === "reference") {
       // TODO for weak references, the expand should return \`T | undefined\`
       const to = Array.isArray(intrinsic.to) ? intrinsic.to : [intrinsic.to];
       const union = to
@@ -289,54 +289,54 @@ async function generateTypes({
             ...parents,
             {
               node: intrinsic,
-              path: '_ref',
+              path: "_ref",
             },
           ])
         )
-        .join(' | ');
+        .join(" | ");
 
       // Note: we want the union to be wrapped by one Reference<T> so when
       // unwrapped the union can be further discriminated using the `_type`
       // of each individual reference type
-      return `SanityReference<${union}>`;
+      return union;
     }
 
-    if (intrinsic.type === 'boolean') {
-      return 'boolean';
+    if (intrinsic.type === "boolean") {
+      return "boolean";
     }
-    if (intrinsic.type === 'date') {
-      return 'string';
+    if (intrinsic.type === "date") {
+      return "string";
     }
-    if (intrinsic.type === 'datetime') {
-      return 'string';
+    if (intrinsic.type === "datetime") {
+      return "string";
     }
-    if (intrinsic.type === 'number') {
-      return 'number';
+    if (intrinsic.type === "number") {
+      return "number";
     }
-    if (intrinsic.type === 'slug') {
+    if (intrinsic.type === "slug") {
       return `{ _type: '${
         intrinsic.name || intrinsic.type
       }'; current: string; }`;
     }
-    if (intrinsic.type === 'string') {
+    if (intrinsic.type === "string") {
       // Sanity lets you specify a set of list allowed strings in the editor
       // for the type of string. This checks for that and returns unioned
       // literals instead of just `string`
       if (intrinsic.options?.list && Array.isArray(intrinsic.options?.list)) {
         return intrinsic.options?.list
-          .map((item) => (typeof item === 'object' ? item.value : item))
+          .map((item) => (typeof item === "object" ? item.value : item))
           .map((item) => `'${item}'`)
-          .join(' | ');
+          .join(" | ");
       }
 
       // else just return a string
-      return 'string';
+      return "string";
     }
-    if (intrinsic.type === 'text') {
-      return 'string';
+    if (intrinsic.type === "text") {
+      return "string";
     }
-    if (intrinsic.type === 'url') {
-      return 'string';
+    if (intrinsic.type === "url") {
+      return "string";
     }
 
     return getTypeName(obj.type, { allowHyphen: true, allowPeriod: true });
@@ -344,12 +344,12 @@ async function generateTypes({
 
   function convertField(field: Field, parents: Parent[]) {
     const required = !!field.codegen?.required;
-    const optional = !required ? '?' : '';
+    const optional = !required ? "?" : "";
 
-    if (required && typeof field.validation !== 'function') {
+    if (required && typeof field.validation !== "function") {
       throw new Error(
         `Field "${[...parents.map((i) => i.path), field.name].join(
-          '.'
+          "."
         )}" was marked as required but did not have a validation function.`
       );
     }
@@ -363,7 +363,7 @@ async function generateTypes({
       /**
        * ${field.title || field.name} — \`${field.type}\`
        *
-       * ${field.description || ''}
+       * ${field.description || ""}
        */
       ${field.name}${optional}: ${convertType(field, [
       ...parents,
@@ -383,7 +383,7 @@ async function generateTypes({
     /**
      * ${title || name}
      *
-     * ${description || ''}
+     * ${description || ""}
      */
     export interface ${createTypeName(name, {
       allowHyphen: true,
@@ -395,7 +395,7 @@ async function generateTypes({
             convertField(field, [{ node: schemaType, path: name }])
           )
           .filter(Boolean)
-          .join('\n')}
+          .join("\n")}
     }
   `;
   }
@@ -441,7 +441,7 @@ async function generateTypes({
       };
   `,
     ...types
-      .filter((t): t is DocumentType => t.type === 'document')
+      .filter((t): t is DocumentType => t.type === "document")
       .map(generateTypeForDocument),
     ...otherTypes
       .filter(
@@ -464,7 +464,7 @@ async function generateTypes({
         .map(({ name }) =>
           getTypeName(name, { allowHyphen: true, allowPeriod: false })
         )
-        .join(' | ')}
+        .join(" | ")}
     `);
   }
 
@@ -476,7 +476,7 @@ async function generateTypes({
     console.warn(
       `Could not find types for: ${missingTypes
         .map((t) => `"${t}"`)
-        .join(', ')}. Ensure they are present in your schema. ` +
+        .join(", ")}. Ensure they are present in your schema. ` +
         `Future versions of sanity-codegen will allow you to type them separately.`
     );
   }
@@ -499,9 +499,9 @@ async function generateTypes({
       )
     : null;
 
-  return format(typeStrings.join('\n'), {
+  return format(typeStrings.join("\n"), {
     ...resolvedConfig,
-    parser: 'typescript',
+    parser: "typescript",
   });
 }
 
